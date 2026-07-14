@@ -5,8 +5,6 @@ from typing import List, Dict, Optional, Any
 
 class LimitExceededError(Exception):
     pass
-
-#Описывает одну активную или приостановленную подписку пользователя
 class Subscription:
     def __init__(
         self,
@@ -21,12 +19,12 @@ class Subscription:
         self.category = category
         self.next_billing_date = next_billing_date
         self.is_active = is_active
-    # Возвращает количество дней, оставшихся до следующего списания, относительно текущей системной даты
+
     def get_days_left(self) -> int:
         today = datetime.date.today()
         delta = self.next_billing_date - today
         return delta.days
-    # Конвертирует объект подписки в словарь
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             "title": self.title,
@@ -47,7 +45,6 @@ class Subscription:
             ).date(),
             is_active=data.get("is_active", True),
         )
-    # Возвращает красивое текстовое представление подписки для вывода в CLI.
     def __str__(self) -> str:
         status = "Активна" if self.is_active else "Приостановлена"
         days_left = self.get_days_left()
@@ -57,7 +54,6 @@ class Subscription:
             f"({days_left} дн.)"
         )
 
-#Описывает единичный расход пользователя
 class Expense:
     def __init__(
         self,
@@ -70,7 +66,7 @@ class Expense:
         self.category = category
         self.date = date or datetime.date.today()
         self.description = description
-    #Конвертирует объект расхода в словарь
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             "amount": self.amount,
@@ -96,7 +92,6 @@ class FinanceTracker:
         self.subscriptions: List[Subscription] = []
         self.expenses: List[Expense] = []
 
-    # Пополняет текущий счет или устанавливает его стартовое значение
     def set_balance(self, amount: float) -> None:
         self.balance = amount
     #Устанавливает или обновляет лимит для конкретной категории
@@ -104,7 +99,7 @@ class FinanceTracker:
         if amount < 0:
             raise ValueError("Лимит не может быть отрицательным.")
         self.limits[category] = amount
-    #Создает и добавляет новую подписку в список
+
     def add_subscription(
         self,
         title: str,
@@ -114,14 +109,14 @@ class FinanceTracker:
     ) -> None:
         sub = Subscription(title, cost, category, next_billing_date)
         self.subscriptions.append(sub)
-    # Удаляет подписку из списка по её названию
+
     def remove_subscription(self, title: str) -> bool:
         for i, sub in enumerate(self.subscriptions):
             if sub.title == title:
                 del self.subscriptions[i]
                 return True
         return False
-    #Рассчитывает и возвращает баланс за вычетом суммы подписок, до оплаты которых осталось 7 и менее дней
+
     def get_safe_balance(self) -> float:
         today = datetime.date.today()
         deduction = 0.0
@@ -140,7 +135,7 @@ class FinanceTracker:
             if e.date.year == today.year and e.date.month == today.month:
                 result[e.category] = result.get(e.category, 0.0) + e.amount
         return result
-    #Принимает данные расхода
+
     def add_expense(
         self,
         amount: float,
@@ -176,7 +171,7 @@ class FinanceTracker:
 
         return warning_msg
 
-    #Запускается один раз при старте программы. Проходит циклом по подпискам и сравнивает даты
+
     def process_auto_billings(self) -> List[str]:
         logs: List[str] = []
         today = datetime.date.today()
@@ -223,7 +218,7 @@ class FinanceTracker:
                 next_month_first = datetime.date(year, month + 1, 1)
             last_day = next_month_first - datetime.timedelta(days=1)
             return last_day
-    #Рассчитывает суммарную стоимость всех подписок, которые требуют оплаты в ближайшие 30 дней.
+
     def get_monthly_forecast(self) -> float:
         today = datetime.date.today()
         forecast = 0.0
@@ -234,7 +229,7 @@ class FinanceTracker:
             if 0 <= delta_days <= 30:
                 forecast += sub.cost
         return forecast
-    #Агрегирует данные за текущий календарный месяц
+
     def get_category_stats(self) -> Dict[str, Dict[str, Any]]:
         today = datetime.date.today()
         totals: Dict[str, float] = {}
@@ -296,7 +291,6 @@ class FinanceTracker:
             json.dump(self.to_dict(), f, ensure_ascii=False, indent=2)
 
 
-
 def get_float_input(prompt: str) -> float:
     while True:
         try:
@@ -328,7 +322,6 @@ def main():
     filepath = "wallet.json"
     tracker = FinanceTracker.load(filepath)
 
-    # Обработка автосписаний при стартеg
     logs = tracker.process_auto_billings()
     if logs:
         print("\n=== Уведомления при старте ===")
